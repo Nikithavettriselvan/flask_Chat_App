@@ -94,7 +94,7 @@ h3 span {
     box-sizing: border-box;
 }
 
-/* STEP 1: Input wrapper styled like a single input box */
+
 .input-wrapper {
     display: flex;
     align-items: center;
@@ -106,7 +106,7 @@ h3 span {
     background-color: white;
 }
 
-/* STEP 2: Style the emoji and file buttons (inside icons) */
+
 .input-wrapper .icon-btn {
     background: none;
     border: none;
@@ -115,7 +115,7 @@ h3 span {
     color: gray;
 }
 
-/* STEP 3: Style the actual input field */
+
 .input-wrapper input#message {
     flex: 1;
     border: none;
@@ -125,7 +125,7 @@ h3 span {
     background: transparent;
 }
 
-/* Optional: style send/clear/exit buttons */
+
 .chat-controls > button {
     padding: 0.6rem 1.2rem;
     background-color: brown;
