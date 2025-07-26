@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+<body>
+    <div class="logo-container">
+        <img src="static/logo.svg" width="50px" class="logo" alt="logo">
+        <h1 class="site-name">Chatverse</h1>
+    </div>
+    <div class="top-section">
+        <div class="left-header">
+            <p class="about"><strong>Welcome to chatverse!!!!</strong><br> &emsp; A simple, real time chat app for learning and connection. This platform is designed to help students, educators, and teams communicate effectively in dedicated chat rooms. you can easily create or join rooms with a unique code, making every conversation private and secure. ChatVerse supports live messaging with no delays, helping you stay in sync with your peers.
+            Whether you're working on a project, clarifying doubts, or just catching up with friends, this website makes communication smooth and effortless.
+            No installations, no complex setup — just type your name and start chatting instantly.
+            Experience seamless, real-time conversations right from your browser.</p>
+        </div>
+        <div class="right-header">
+            <img src="static/chatimg.jpg" alt="chat image">
+        </div>
+    </div>
+    <div class="container">
+        <h2>Join or Create a Chat Room</h2>
+        <form method="POST">
+            <label>Enter Your Name:</label><br>
+            <input type="text" name="name" placeholder="Your Name"><br><br>
+            <!-- Error message if name or room code is missing -->
+            {% if error %}
+                <p class="error">*{{ error }}</p>
+            {% endif %}
+            <label>Enter Room Code:</label><br>
+            <input type="text" name="room" placeholder="Room Code"><br><br>
+        
+            <div class="button-group">
+                <button type="submit" name="join" value="true">Join Room</button>
+                <button type="submit" name="create" value="true">Create Room</button>
+            </div>
+        </form>
+    </div>
+    <footer class="footer">
+        <p>&copy: 2025 Chatverse | Created by Nikitha</p>
+    </footer>
+</body>
+</html>

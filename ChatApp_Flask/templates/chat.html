@@ -1,0 +1,342 @@
+<!DOCTYPE html>  <html>  
+<head>  
+    <title>Chat Room - {{ room }}</title>  
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">  
+    <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">  
+</head>  
+<body>  <div class="room-info">  
+<h3>Room Code: <span>{{ room }}</span></h3>  
+
+<div style="display:flex;gap:8px;">  
+    <label class="switch" title="Dark Mode Toggle">  
+        <input type="checkbox" id="dark-toggle">  
+        <span class="slider round"></span>  
+    </label>  
+</div>  
+  
+  
+<div class="user-icon-wrapper">  
+    <button onclick="toggleUserList()" class="user-icon">  
+        <img src="/static/userslogo.svg" alt="users" width="25" height="25">  
+        <span class="user-count" id="user-count">0</span>  
+    </button>  
+</div>  
+</div>  
+
+<div id="messages"></div>  
+<div id="typing-indicator" style="font-style: italic; color: #888;"></div>  
+<div id="user-list" style="display: none;">  
+    <strong>Users in the room:</strong>  
+    <ul id="users"></ul>  
+    <button class="inside-btn" onclick="closeUserList()">Close</button>  
+</div>  
+      
+<div class="chat-controls">  
+    <div class="input-wrapper">  
+        <button id="emoji-btn" class="icon-btn">😊</button>  
+        <input id="message" placeholder="Type your message..." autocomplete="off">  
+        <button id="file-btn" class="icon-btn">📎</button>  
+        <input type="file" id="file-input" style="display: none;" />  
+    </div>  
+    <button onclick="sendMessage()">Send</button> 
+    <button onclick="clearmessages()">Clear</button>  
+    <button onclick="leaveRoom()">Exit</button>  
+</div>
+  
+
+<!-- keep emoji-picker below -->  
+<emoji-picker id="emoji-picker" style="display: none;"></emoji-picker>  
+<div id="confirm-exit" class="modal">  
+    <div class="modal-content">  
+         <p>Are you sure you want to leave the chat?</p>  
+        <button class="inside-btn" onclick="confirmExit(true)">Yes</button>  
+        <button class="inside-btn" onclick="confirmExit(false)">No</button>  
+    </div>  
+</div>  
+
+<div id="popupModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <p id="popupMessage">Are you sure you want to remove this user</p>
+        <button id="confirmBtn">yes</button>
+        <button id="cancelBtn">No</button>
+    </div>
+</div>
+
+<div  id="removedByAdminPopup" style="display: none;" class="modal">
+    <div class="modal-content">
+        <p>you have been removed by the admin</p>
+        <button id="removedCloseBtn">close</button>
+    </div>
+</div>
+  
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>  
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>  
+  
+
+<script>  
+    const socket = io();  
+    const name = "{{ name }}";  
+    const room = "{{ room }}";  
+
+    // Join room when page loads  
+    socket.emit('join', { name, room });  
+    socket.emit('request_users',{room});  
+
+    // Listen for new messages  
+    socket.on('message', data => {  
+        const div = document.createElement('div');  
+        if (!data.name) {  
+            div.innerHTML = `<em>${data.message}</em>`;  
+            div.style.textAlign = "center";  
+            div.style.fontStyle = "italic";  
+            div.style.color = "brown";  
+
+            if (data.message.includes('has entered') || data.message.includes('has left')) {  
+            socket.emit('request_users', { room });  
+        }  
+
+        } else {  
+    // Regular user message  
+    div.innerHTML = `<span class="timestamp">${data.time}</span> <strong>${data.name}</strong>: ${data.message}`;  
+    }  
+
+    document.getElementById('messages').appendChild(div);     
+    });  
+    // Send message  
+    function sendMessage() {  
+        const messageInput = document.getElementById('message');  
+        const message = messageInput.value;  
+
+        if (message.trim() !== "") {  
+            const now = new Date();  
+            const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });  
+
+            socket.emit('message', { name, room, message, time: timestamp });  
+            messageInput.value = '';  
+        }  
+    }  
+      
+    function leaveRoom() {  
+        document.getElementById("confirm-exit").style.display = "block";  
+    }  
+      
+    function confirmExit(answer) {  
+        document.getElementById("confirm-exit").style.display = "none";  
+            if (answer) {  
+                socket.emit('leave', { name, room });  
+                window.location.href = '/';  
+        }     
+    }  
+    function clearmessages(){  
+        document.getElementById('messages').innerHTML = '';  
+    }  
+    function toggleUserList() {  
+        socket.emit('request_users', { room });  
+    }  
+
+    socket.on('user_list', data => {  
+        const usersUl = document.getElementById('users');  
+        usersUl.innerHTML = '';  
+          
+        data.users.forEach(user => {  
+            addUserToList(user.name,user.id);  
+        });  
+
+        document.getElementById('user-list').style.display = 'block';  
+        document.getElementById('user-count').textContent = (`${data.users.length}`);  
+    });  
+
+    function closeUserList(){  
+        document.getElementById('user-list').style.display = 'none'  
+    }  
+
+    // Emoji picker  
+    const emojiBtn = document.getElementById('emoji-btn');  
+    const emojiPicker = document.getElementById('emoji-picker');  
+    const messageInput = document.getElementById('message');  
+
+    // Toggle emoji picker visibility  
+    emojiBtn.addEventListener('click', () => {  
+        emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';  
+    });  
+
+    // Insert emoji into input field (but don't hide picker)  
+    emojiPicker.addEventListener('emoji-click', event => {  
+         messageInput.value += event.detail.unicode;  
+    });  
+    // To close the emojipicker   
+    document.addEventListener('click', (event) => {  
+        const isClickInside = emojiPicker.contains(event.target) || emojiBtn.contains(event.target);  
+        if (!isClickInside) {  
+            emojiPicker.style.display = 'none';  
+        }  
+    });  
+
+    //file-sharing  
+    document.getElementById('file-btn').addEventListener('click', () => {  
+        document.getElementById('file-input').click();  
+    });  
+
+    document.getElementById('file-input').addEventListener('change', (e) => {  
+        const file = e.target.files[0];  
+
+        if (!file) return;  
+
+        if (file.size > 16 * 1024 * 1024) { // 16MB  
+            alert("File is too large (max 16MB)");  
+            e.target.value = ''; // Clear selected file  
+            return;  
+        }  
+
+        // Continue processing the file (e.g., convert to base64 and emit via socket)  
+        const reader = new FileReader();  
+        reader.onload = () => {  
+            const base64 = reader.result;  
+            const now = new Date();  
+            const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });  
+
+            socket.emit('file_upload', {  
+                name: name,  
+                room: room,  
+                time: timestamp,  
+                fileName: file.name,  
+                fileType: file.type,  
+                fileData: base64  
+            });  
+            document.getElementById('file-input').value = '';  
+        };  
+        reader.readAsDataURL(file);  
+    });  
+    socket.on('file_shared', (data) => {  
+        const div = document.createElement('div');  
+        div.classList.add('file-message');  
+
+        let content = `<span class="timestamp">${data.time}</span> <strong>${data.name}</strong>: `;  
+
+        // If it's an image, show preview; otherwise, show download link  
+        if (data.fileType.startsWith('image/')) {  
+            content += `<br><img src="${data.fileData}" alt="${data.fileName}" width="200">`;  
+        } else {  
+            content += `<br><a href="${data.fileData}" download="${data.fileName}">📄 ${data.fileName}</a>`;  
+        }  
+
+        div.innerHTML = content;  
+        document.getElementById('messages').appendChild(div);  
+    });  
+
+    //typing indicator  
+      
+    // Emit typing event  
+    let typingTimer;  
+    document.getElementById('message').addEventListener('input', () => {  
+        socket.emit('typing', { name, room });  
+
+        clearTimeout(typingTimer);  
+        typingTimer = setTimeout(() => {  
+            socket.emit('typing', { name: '', room }); // Clear after delay  
+        }, 1000);  
+    });  
+
+    // Listen for typing event  
+    socket.on('typing', data => {  
+    const typingIndicator = document.getElementById('typing-indicator');  
+        if (data.name && data.name !== name) {  
+            typingIndicator.textContent = `${data.name} is typing...`;  
+        } else {  
+            typingIndicator.textContent = '';  
+        }         
+    });  
+
+    //dark-mode toggle  
+    const toggle = document.getElementById('dark-toggle');  
+
+    // Set initial toggle state based on saved preference  
+    if (localStorage.getItem('darkMode') === 'enabled') {  
+        toggle.checked = true;  
+        document.body.classList.add('dark-mode');  
+    }  
+
+    // When the switch is toggled  
+    toggle.addEventListener('change', function () {  
+        if (this.checked) {  
+            document.body.classList.add('dark-mode');  
+            localStorage.setItem('darkMode', 'enabled');  
+        } else {  
+            document.body.classList.remove('dark-mode');  
+            localStorage.setItem('darkMode', 'disabled');  
+        }  
+    });  
+
+    const isAdmin = true;  
+    const myUserId = "my-id";   
+
+    if (isAdmin) {  
+        document.body.classList.add("admin-mode");  
+    }  
+
+    function addUserToList(username, userId) {  
+        const userList = document.getElementById("users");  
+
+        const userItem = document.createElement("li");  
+        userItem.className = "user-item";  
+        userItem.setAttribute("data-user-id", userId);  
+
+        const nameSpan = document.createElement("span");  
+        nameSpan.textContent = username;  
+        userItem.appendChild(nameSpan);  
+
+        if(isAdmin && userId !== myUserId)  
+        {  
+
+            const removeBtn = document.createElement("button");  
+            removeBtn.className = "remove-btn";  
+            removeBtn.textContent = "❌";  
+            removeBtn.onclick = () => showPopup(username, userId);  
+
+            userItem.appendChild(removeBtn);  
+        }  
+        userList.appendChild(userItem);  
+        if (userId !== myUserId){  
+            const audio = new Audio("sound.mp3");  
+            audio.play();  
+        }  
+    }  
+
+    socket.on('force_leave', () => {  
+        document.getElementById('removedByAdminPopup').style.display = 'block';
+    });  
+    document.getElementById('removedCloseBtn').onclick = function(){
+        document.getElementById('removedByAdminPopup').style.display = 'none';
+        window.location.href = "/";
+    };
+
+
+    let userToRemove = null;
+    let userIdToRemove = null;
+
+    function showPopup(username,userId) {
+        userToRemove = username;
+        userIdToRemove = userId;
+    document.getElementById('popupMessage').textContent = `Are you sure you want to remove ${username}?`;
+    document.getElementById('popupModal').style.display = 'block';
+    }
+
+    document.getElementById('confirmBtn').onclick = function () {
+        socket.emit('remove_user',{room,userId:userIdToRemove});
+    document.getElementById('popupModal').style.display = 'none';
+    };
+
+    document.getElementById('cancelBtn').onclick = function () {
+        document.getElementById('popupModal').style.display = 'none';
+    };
+
+
+    // Leave room on refresh or close  
+    window.onbeforeunload = function () {  
+        socket.emit('leave', { name, room });  
+    };  
+</script>
+
+</body>  
+</html>  
