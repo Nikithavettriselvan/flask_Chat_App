@@ -161,7 +161,7 @@
         emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';  
     });  
 
-    // Insert emoji into input field (but don't hide picker)  
+
     emojiPicker.addEventListener('emoji-click', event => {  
          messageInput.value += event.detail.unicode;  
     });  
@@ -185,11 +185,11 @@
 
         if (file.size > 16 * 1024 * 1024) { // 16MB  
             alert("File is too large (max 16MB)");  
-            e.target.value = ''; // Clear selected file  
+            e.target.value = ''; 
             return;  
         }  
 
-        // Continue processing the file (e.g., convert to base64 and emit via socket)  
+        // Continue processing the file 
         const reader = new FileReader();  
         reader.onload = () => {  
             const base64 = reader.result;  
@@ -214,7 +214,7 @@
 
         let content = `<span class="timestamp">${data.time}</span> <strong>${data.name}</strong>: `;  
 
-        // If it's an image, show preview; otherwise, show download link  
+        
         if (data.fileType.startsWith('image/')) {  
             content += `<br><img src="${data.fileData}" alt="${data.fileName}" width="200">`;  
         } else {  
@@ -225,7 +225,7 @@
         document.getElementById('messages').appendChild(div);  
     });  
 
-    //typing indicator  
+     
       
     // Emit typing event  
     let typingTimer;  
@@ -251,7 +251,7 @@
     //dark-mode toggle  
     const toggle = document.getElementById('dark-toggle');  
 
-    // Set initial toggle state based on saved preference  
+    
     if (localStorage.getItem('darkMode') === 'enabled') {  
         toggle.checked = true;  
         document.body.classList.add('dark-mode');  
