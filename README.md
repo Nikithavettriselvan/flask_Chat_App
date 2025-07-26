@@ -16,3 +16,5 @@ Features:
 *User list display – View the list of users currently active in the chat room.
 
 This project was created as part of a learning journey to build real-time applications with Flask. It is designed to be lightweight, interactive, and simple to use.
+
+Note : Install all the required dependencies and run the application
