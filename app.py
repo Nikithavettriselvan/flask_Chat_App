@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
-socketio = SocketIO(app)
+socketio = SocketIO(app,cors_allowed_origins="*")
 
 #This is all we need to track users
 users_in_rooms = {}
@@ -152,5 +152,5 @@ def handle_remove_user(data):
 
 #Run the app
 if __name__ == '__main__':
-    socketio.run(app)
+    socketio.run(app,debug=False)
 
